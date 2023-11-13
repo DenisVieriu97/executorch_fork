@@ -46,9 +46,6 @@ jobs:
       - name: Run test ${{ matrix.test }}
         if: always()
         run: |
-          cd ..
-          rm -r -f executorch || true
-          cp -a executorch_apple_internal executorch && cd executorch
           WORKSPACE=$(pwd)
           pushd "${WORKSPACE}"
           MODEL_NAME=${{ matrix.model }}
@@ -59,7 +56,3 @@ jobs:
           # Build and test ExecuTorch
           PYTHON_EXECUTABLE=python bash backends/apple/mps/ci/scripts/test-mps.sh "${MODEL_NAME}" "${BUILD_TOOL}"
           popd
-      - name: Cleanup test ${{ matrix.test }}
-        if: always()
-        run: |
-          cd .. && mv executorch executorch_apple_internal && cd executorch_apple_internal

@@ -20,6 +20,7 @@ def define_common_targets():
                 "mps_executor_runner.mm",
             ],
             deps = [
+                "//executorch/backends/apple/mps:mps_schema",
                 "//executorch/backends/apple/mps:mps",
                 "//executorch/runtime/executor:program",
                 "//executorch/extension/evalue_util:print_evalue",

@@ -87,6 +87,9 @@ jobs:
           which python
           python --version
 
+          git submodule sync
+          git submodule update --init --recursive
+
           source .ci/scripts/utils.sh
           conda install -y cmake
           pip install ninja
@@ -143,6 +146,9 @@ jobs:
           python3 --version
           which python
           python --version
+
+          git submodule sync
+          git submodule update --init --recursive
 
           source .ci/scripts/utils.sh
           conda install -y cmake

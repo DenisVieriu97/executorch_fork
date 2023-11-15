@@ -29,22 +29,37 @@ fi
 
 which "${PYTHON_EXECUTABLE}"
 CMAKE_OUTPUT_DIR=cmake-out
+BUILD_TYPE=Debug
 
 build_cmake_mps_executor_runner() {
   echo "Building mps_executor_runner"
   SITE_PACKAGES="$(${PYTHON_EXECUTABLE} -c 'from distutils.sysconfig import get_python_lib; print(get_python_lib())')"
   CMAKE_PREFIX_PATH="${SITE_PACKAGES}/torch"
 
+  # Build and install executorch
   (rm -rf ${CMAKE_OUTPUT_DIR} \
-    && mkdir ${CMAKE_OUTPUT_DIR} \
-    && cd ${CMAKE_OUTPUT_DIR} \
     && cmake -DBUCK2=buck2 \
-      -DEXECUTORCH_BUILD_MPS=ON \
-      -DEXECUTORCH_BUILD_SDK=ON \
-      -DCMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH" \
-      -DPYTHON_EXECUTABLE="$PYTHON_EXECUTABLE" ..)
+          -DCMAKE_INSTALL_PREFIX=${CMAKE_OUTPUT_DIR} \
+          -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+          -DEXECUTORCH_BUILD_SDK=ON \
+          -DEXECUTORCH_ENABLE_EVENT_TRACER=OFF \
+          -DEXECUTORCH_BUILD_MPS=ON \
+          -DPYTHON_EXECUTABLE="$PYTHON_EXECUTABLE" \
+          -Bcmake-out .)
 
-  cmake --build ${CMAKE_OUTPUT_DIR} -j4
+  cmake --build ${CMAKE_OUTPUT_DIR} -j9 --target install --config ${BUILD_TYPE}
+  CMAKE_PREFIX_PATH="${PWD}/cmake-out/lib/cmake/ExecuTorch;${PWD}/cmake-out/third-party/gflags"
+
+  # Build the mps_executor_runner
+  rm -rf cmake-out/examples/apple/mps
+  cmake \
+      -DCMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH" \
+      -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+      -DPYTHON_EXECUTABLE="$PYTHON_EXECUTABLE" \
+      -Bcmake-out/examples/apple/mps \
+      examples/apple/mps
+
+  cmake --build cmake-out/examples/apple/mps -j9 --config ${BUILD_TYPE}
 }
 
 test_model_with_mps() {

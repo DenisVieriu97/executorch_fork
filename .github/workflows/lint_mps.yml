@@ -16,20 +16,42 @@ jobs:
   lintrunner-mps:
     runs-on: macos-executorch
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
-          submodules: 'true'
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-          cache: pip
+            submodules: 'recursive'
       - name: Lintrunner
         id: lint-mps
         run: |
           set -eux
-          source .ci/scripts/utils.sh
+          # Conda setup
+          if conda info --envs | grep -w -q "env-${{ runner.name }}"; then echo "env-${{ runner.name }} already exists"; else conda create -y -n "env-${{ runner.name }}" python=3.10; fi
+          CONDA_ENV="~/miniconda3/envs/env-${{ runner.name }}"
+          PYTHON_PATH="$CONDA_ENV/bin/python3"
+          if [[ -n "$CONDA_ENV" ]]; then
+          # Use binaries under conda environment
+          export PATH="$CONDA_ENV/bin":$PATH
+          fi
+
+          conda init zsh
+          conda init
+          source ~/miniconda3/bin/activate
+          conda deactivate
+          conda activate "$CONDA_ENV"
+
+          # Print out some information about the test environment
+          which conda
+          conda --version
+          which python3
+          python3 --version
+          which python
+          python --version
+
+          git submodule update --init --recursive
+
           # This is a simple Python script but as it tries to import executorch.examples.models,
           # it requires a whole bunch of ExecuTorch dependencies on the Docker image
+          source .ci/scripts/utils.sh
+          conda install -y cmake
           install_pip_dependencies
           install_executorch
           brew install jq
@@ -59,3 +81,10 @@ jobs:
             echo -e "\e[1m\e[36mSee https://github.com/pytorch/pytorch/wiki/lintrunner for setup instructions.\e[0m"
             RC=1
           fi
+
+          # Use jq to massage the JSON lint output into GitHub Actions workflow commands.
+          jq --raw-output \
+            '"::\(if .severity == "advice" or .severity == "disabled" then "warning" else .severity end) file=\(.path),line=\(.line),col=\(.char),title=\(.code) \(.name)::" + (.description | gsub("\\n"; "%0A"))' \
+            lint.json || true
+
+          exit $RC

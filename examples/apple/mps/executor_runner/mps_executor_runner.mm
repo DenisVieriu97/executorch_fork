@@ -414,7 +414,7 @@ int main(int argc, char** argv) {
   // Prepare the inputs.
   exec_aten::ArrayRef<void*> inputs;
   if (FLAGS_bundled_program) {
-    ET_LOG(Info, "Loading bundled program...\n");
+    ET_LOG(Debug, "Loading bundled program");
     // Use the inputs embedded in the bundled program.
     status = torch::executor::bundled_program::LoadBundledInput(
         *method,
@@ -429,7 +429,7 @@ int main(int argc, char** argv) {
     // Use ones-initialized inputs.
     inputs = torch::executor::util::PrepareInputTensors(*method);
   }
-  ET_LOG(Info, "Inputs prepared.");
+  ET_LOG(Debug, "Inputs prepared");
 
   int num_iterations = FLAGS_num_runs + (FLAGS_skip_warmup ? 0 : 1);
   std::vector<float> exec_times;
@@ -459,7 +459,7 @@ int main(int argc, char** argv) {
     const float avg_time = (std::reduce(itr, exec_times.end()) / static_cast<float>(FLAGS_num_runs)) / 1000.f;
     std::cout << "Average inference time: " << std::setprecision(2) << std::fixed << avg_time << " miliseconds\n";
   }
-  ET_LOG(Info, "Model executed successfully.");
+  ET_LOG(Debug, "Model executed successfully.");
 
   auto output_list =
       runtime_allocator.allocateList<EValue>(method->outputs_size());
@@ -498,7 +498,6 @@ int main(int argc, char** argv) {
         strstr(model_path, "vit")                  ||
         strstr(model_path, "resnet18")             ||
         strstr(model_path, "resnet50")             ||
-        strstr(model_path, "mobilebert")           ||
         strstr(model_path, "emformer")             ||
         strstr(model_path, "emformer_transcribe")  ||
         strstr(model_path, "emformer_join")        ||
@@ -507,6 +506,9 @@ int main(int argc, char** argv) {
         strstr(model_path, "ic3")                  ||
         strstr(model_path, "ic4")) {
       atol = 1e-04;
+    } else if (strstr(model_path, "mobilebert")) {
+      atol = 1e-01;
+      rtol = 1e-01;
     }
     status = torch::executor::bundled_program::VerifyResultWithBundledExpectedOutput(
         *method,

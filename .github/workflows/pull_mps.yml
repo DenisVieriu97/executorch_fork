@@ -43,6 +43,8 @@ jobs:
       fail-fast: false
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: 'true'
       - name: Run test ${{ matrix.test }}
         if: always()
         run: |

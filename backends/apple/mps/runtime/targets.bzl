@@ -12,36 +12,46 @@ def define_common_targets(is_fbcode = False):
     TARGETS and BUCK files that call this function.
     """
     if runtime.is_oss:
-        runtime.cxx_library(
+        runtime.apple_library(
             name = "MPSBackend",
             srcs = [
-              "MPSExecutor.mm",
-              "MPSCompiler.mm",
-              "MPSBackend.mm",
-              "MPSStream.mm",
-              "MPSDevice.mm",
-            ] + native.glob(["utils/OperationUtils.mm"]),
-            # lang_preprocessor_flags = 'objective-c++'
+              ("MPSExecutor.mm", [""]),
+              ("MPSCompiler.mm", [""]),
+              ("MPSBackend.mm",  [""]),
+              ("MPSStream.mm",   [""]),
+              ("MPSDevice.mm",   [""]),
+            ],
             visibility = [
-                "//executorch/exir/backend:backend_lib",
-                "//executorch/backends/apple/...",
-                "//executorch/runtime/backend/...",
-                "//executorch/extension/pybindings/...",
-                "//executorch/sdk/runners/...",
-                "//executorch/test/...",
                 "//executorch/examples/...",
                 "@EXECUTORCH_CLIENTS",
             ],
-            headers = native.glob([
-              "runtime/*.h",
-            ]),
-            # registration of backends is done through a static global
-            compiler_flags = ["-Wno-global-constructors"],
+            headers = [
+              "MPSStream.h",
+              "MPSDevice.h",
+            ],
+            compiler_flags = ["-std=c++17", "-iframeworkwithsysroot /System/Library/Frameworks/Foundation.framework"],
             external_deps = [
             "gflags",
             ],
+            include_directories = ["/System/Library/Frameworks/Foundation.framework"],
+            # precompiled_header =
+            #   ("-F MetalPerformanceShaders",),
             exported_deps = [
                 "//executorch/runtime/backend:interface",
             ],
+            deps = [
+                "//executorch/backends/apple/mps/utils:mps_utils",
+                "//executorch/runtime/kernel:kernel_includes",
+            ],
+            exported_preprocessor_flags = ["-fobjc-arc", "-iframeworkwithsysroot /System/Library/Frameworks/Foundation.framework"],
+            exported_header_style = "system",
+            public_system_include_directories = ["/System/Library/Frameworks/Foundation.framework"],
+            # define_static_target = True,
+
+            preprocessor_flags = ['-framework Foundation'],
+            platform_preprocessor_flags = ['-framework Foundation'],
+            # linker_flags = ["-fobjc-arc", "-framework Metal"],
             link_whole = True,
+
+            # platform_linker_flags = ["-fobjc-arc -F Foundation"],
         )

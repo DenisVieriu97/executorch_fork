@@ -11,18 +11,34 @@ def define_common_targets():
     if runtime.is_oss:
         runtime.cxx_binary(
             name = "mps_executor_runner",
-            srcs = ["mps_executor_runner.mm"],
+            srcs = [
+              ("mps_executor_runner.mm", ["-fobjc-arc"]),
+              ],
+            # platform_compiler_flags = ['-fobjc-arc', '-F Foundation'],
+            linker_extra_outputs = ['-fobjc-arc', '-F Foundation'],
+            preprocessor_flags = ['-fobjc-arc', '-F Foundation'],
+            compiler_flags = ['-fobjc-arc', '-F Foundation', '-std=c++17'],
+            linker_flags = ['-fobjc-arc', '-F Foundation', '-std=c++17'],
+            platform_linker_flags = ['-fobjc-arc', '-F Foundation', '-std=c++17'],
+            # platform_preprocessor_flags = ['-F Foundation'],
+            include_directories = ["/System/Library/Frameworks"],
             deps = [
-                "//executorch/backends/apple/mps/runtime:MPSBackend",
+                # "//executorch/backends/apple/mps/runtime:MPSBackend",
                 "//executorch/runtime/executor:program",
                 "//executorch/extension/data_loader:file_data_loader",
                 "//executorch/kernels/portable:generated_lib_all_ops",
                 "//executorch/extension/data_loader:file_data_loader",
                 "//executorch/extension/data_loader:buffer_data_loader",
                 "//executorch/util:util",
+                "//executorch/extension/evalue_util:print_evalue",
                 "//executorch/sdk/bundled_program:runtime",
                 "//executorch/util:util",
             ],
+            external_deps = [
+                "gflags",
+            ],
+            # exported_preprocessor_flags = ["-fobjc-arc",]
+            # compiler_flags = ["-std=c++17"],
             define_static_target = True,
-            **get_oss_build_kwargs()
+            # **get_oss_build_kwargs()
         )

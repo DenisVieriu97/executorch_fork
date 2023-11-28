@@ -32,8 +32,13 @@ jobs:
           # it requires a whole bunch of ExecuTorch dependencies on the Docker image
           install_pip_dependencies
           install_executorch
-          CONDA_ENV=$(conda env list --json | jq -r ".envs | .[-1]")
-          conda activate "${CONDA_ENV}"
+          brew install jq
+
+          source .ci/scripts/utils.sh
+
+          # Install lint depdendencies
+          pip install lintrunner==0.11.0
+          pip install lintrunner-adapters==0.11.0
 
           CACHE_DIRECTORY="/tmp/.lintbin"
           # Try to recover the cached binaries

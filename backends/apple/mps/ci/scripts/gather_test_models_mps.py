@@ -98,9 +98,6 @@ def export_models_for_ci() -> None:
             if target_os not in BUILD_TOOLS[build_tool]:
                 continue
 
-            print(f"method: {testcase._testMethodName}")
-            print(f"{testcase.__class__}")
-            print(f"{testcase.__class__.__name__}")
             cmd = ".".join(
                 [start_path, testcase.__class__.__name__, testcase._testMethodName]
             )

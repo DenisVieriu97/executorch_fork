@@ -35,8 +35,8 @@ jobs:
           install_pip_dependencies
           install_executorch
           PYTHONPATH="${PWD}" python -m backends.apple.mps.ci.scripts.gather_test_models_mps
-  # test-mps-models-macos:
-  #   name: test-mps-models-macos
+  # test-mps-models:
+  #   name: test-mps-models
   #   runs-on: macos-executorch
   #   needs: gather-models-mps
   #   strategy:
@@ -59,8 +59,8 @@ jobs:
   #         # Build and test ExecuTorch
   #         PYTHON_EXECUTABLE=python bash backends/apple/mps/ci/scripts/test-mps.sh "${MODEL_NAME}" "${BUILD_TOOL}"
   #         popd
-  test-mps-macos:
-    name: test-mps-macos
+  test-mps:
+    name: test-mps
     runs-on: macos-executorch
     needs: gather-models-mps
     strategy:

@@ -21,6 +21,12 @@ if [[ -z "${BUILD_TOOL:-}" ]]; then
   exit 1
 fi
 
+MPS_TESTS=$3
+if [[ -z "${MPS_TESTS:-}" ]]; then
+  echo "Missing flag specifying which tests to run, exiting..."
+  exit 1
+fi
+
 which "${PYTHON_EXECUTABLE}"
 CMAKE_OUTPUT_DIR=cmake-out
 
@@ -62,5 +68,28 @@ test_model_with_mps() {
   fi
 }
 
+test_mps_model() {
+  "${PYTHON_EXECUTABLE}" -m unittest "${MODEL_NAME}"
+
+  TEST_NAME="${MODEL_NAME##*.}"
+  OUTPUT_MODEL_PATH="${TEST_NAME}.pte"
+  STR_LEN=${#OUTPUT_MODEL_PATH}
+  FINAL_OUTPUT_MODEL_PATH=${OUTPUT_MODEL_PATH:5:$STR_LEN-5}
+
+  if [[ "${BUILD_TOOL}" == "cmake" ]]; then
+    if [[ ! -f ${CMAKE_OUTPUT_DIR}/examples/apple/mps/mps_executor_runner ]]; then
+      build_cmake_mps_executor_runner
+    fi
+    ./${CMAKE_OUTPUT_DIR}/examples/apple/mps/mps_executor_runner --model_path "${FINAL_OUTPUT_MODEL_PATH}" --bundled_program
+  else
+    echo "Invalid build tool ${BUILD_TOOL}. Only cmake is supported atm"
+    exit 1
+  fi
+}
+
 echo "Testing ${MODEL_NAME} with MPS..."
-test_model_with_mps
+if [[ "${MPS_TESTS}" == false ]]; then
+  test_model_with_mps
+else
+  test_mps_model
+fi

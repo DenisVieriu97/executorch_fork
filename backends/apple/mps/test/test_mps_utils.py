@@ -195,7 +195,7 @@ class TestMPS(unittest.TestCase):
                 method_name="forward",
                 test_cases=[
                     MethodTestCase(
-                        input=sample_inputs, expected_outputs=module(*sample_inputs)
+                        inputs=sample_inputs, expected_outputs=module(*sample_inputs)
                     )
                 ],
             )
@@ -208,7 +208,7 @@ class TestMPS(unittest.TestCase):
             bundled_program
         )
 
-        filename = f"{func_name}.bpte"
+        filename = f"{func_name}.pte"
         logging.info(f"Step 5: Saving bundled program to {filename}...")
         with open(filename, "wb") as file:
             file.write(bundled_program_buffer)

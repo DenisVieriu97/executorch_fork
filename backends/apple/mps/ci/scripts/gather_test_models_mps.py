@@ -69,8 +69,6 @@ def export_models_for_ci() -> None:
     args = parse_args()
     target_os = args.target_os
 
-    print(f"target os: {target_os}")
-
     # This is the JSON syntax for configuration matrix used by GitHub
     # https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs
     models = {"include": []}

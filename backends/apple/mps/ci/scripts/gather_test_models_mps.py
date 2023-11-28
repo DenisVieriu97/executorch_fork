@@ -66,6 +66,8 @@ def export_models_for_ci() -> None:
     args = parse_args()
     target_os = args.target_os
 
+    print(f"target os: {target_os}")
+
     # This is the JSON syntax for configuration matrix used by GitHub
     # https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs
     models = {"include": []}
@@ -95,9 +97,13 @@ def export_models_for_ci() -> None:
             if target_os not in BUILD_TOOLS[build_tool]:
                 continue
 
+            print(f"method: {testcase._testMethodName}")
+            print(f"{testcase.__class__}")
+            print(f"{testcase.__class__.__name__}")
+            cmd = ".".join([start_path, testcase.__class__.__name__, testcase._testMethodName])
             record = {
                 "build-tool": build_tool,
-                "model": testcase._testMethodName,
+                "model": cmd,
                 "runner": DEFAULT_RUNNERS.get(target_os),
             }
 

@@ -52,7 +52,8 @@ add_custom_command(
   OUTPUT ${_bundled_program_schema__outputs}
   COMMAND
     ${FLATC_EXECUTABLE} --cpp --cpp-std c++11 --gen-mutable --scoped-enums -o
-    "${_program_schema__include_dir}/executorch/sdk/bundled_program/schema" ${_bundled_program_schema__srcs}
+    "${_program_schema__include_dir}/executorch/sdk/bundled_program/schema"
+    ${_bundled_program_schema__srcs}
   WORKING_DIRECTORY ${EXECUTORCH_ROOT}
   DEPENDS ${FLATC_EXECUTABLE} ${_bundled_program_schema__srcs}
   COMMENT "Generating bundled_program headers"
@@ -68,8 +69,12 @@ set(mps_executor_runner_libs "-framework Foundation"
                               "-weak_framework MetalPerformanceShaders"
                               "-weak_framework MetalPerformanceShadersGraph"
                               "-weak_framework Metal")
-list(TRANSFORM _mps_executor_runner__srcs PREPEND "${EXECUTORCH_ROOT}/")
-add_executable(mps_executor_runner ${_mps_executor_runner__srcs} ${_bundled_program_schema__outputs})
+list(
+  TRANSFORM _mps_executor_runner__srcs PREPEND "${EXECUTORCH_ROOT}/")
+add_executable(
+  mps_executor_runner
+  ${_mps_executor_runner__srcs}
+  ${_bundled_program_schema__outputs})
 target_include_directories(
   mps_executor_runner INTERFACE ${CMAKE_BINARY_DIR}/schema/include/
                           ${EXECUTORCH_ROOT}/third-party/flatbuffers/include)

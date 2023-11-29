@@ -133,9 +133,7 @@ def run_model(
     method_test_suites = [
         MethodTestSuite(
             method_name="forward",
-            test_cases=[
-                MethodTestCase(inputs=m_inputs, expected_outputs=model(*m_inputs))
-            ],
+            test_cases=[MethodTestCase(inputs=m_inputs, expected_outputs=m(*m_inputs))],
         )
     ]
 

@@ -1,0 +1,61 @@
+name: Lint MPS
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - release/*
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}-${{ github.event_name == 'workflow_dispatch' }}-${{ github.event_name == 'schedule' }}
+  cancel-in-progress: true
+
+jobs:
+  lintrunner-mps:
+    runs-on: macos-executorch
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'true'
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: pip
+      - name: Lintrunner
+        id: lint-mps
+        run: |
+          set -eux
+          source .ci/scripts/utils.sh
+          # This is a simple Python script but as it tries to import executorch.examples.models,
+          # it requires a whole bunch of ExecuTorch dependencies on the Docker image
+          install_pip_dependencies
+          install_executorch
+          brew install jq
+
+          source .ci/scripts/utils.sh
+
+          # Install lint depdendencies
+          pip install lintrunner==0.11.0
+          pip install lintrunner-adapters==0.11.0
+
+          CACHE_DIRECTORY="/tmp/.lintbin"
+          # Try to recover the cached binaries
+          if [[ -d "${CACHE_DIRECTORY}" ]]; then
+            # It's ok to fail this as lintrunner init would download these binaries
+            # again if they do not exist
+            cp -r "${CACHE_DIRECTORY}" . || true
+          fi
+
+          # This has already been cached in the docker image
+          lintrunner init 2> /dev/null
+
+          RC=0
+          # Run lintrunner on all files
+          if ! lintrunner --force-color --all-files --tee-json lint.json 2> /dev/null; then
+            echo ""
+            echo -e "\e[1m\e[36mYou can reproduce these results locally by using \`lintrunner\`. (If you don't get the same results, run \'lintrunner init\' to update your local linter)\e[0m"
+            echo -e "\e[1m\e[36mSee https://github.com/pytorch/pytorch/wiki/lintrunner for setup instructions.\e[0m"
+            RC=1
+          fi

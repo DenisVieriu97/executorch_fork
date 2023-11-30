@@ -9,10 +9,36 @@ namespace mps {
 using namespace torch;
 
 PyMPSGraphTensor*
-MPSGraphModule::conv2D(MPSGraphTensor* primaryTensor, MPSGraphTensor* secondaryTensor,
-                       MPSGraphTensor* biasTensor, IntArrayRef stride,
-                       IntArrayRef padding, IntArrayRef dilation, bool transpose,
-                       IntArrayRef outputPadding, int64_t groups, bool is_depthwise) {
+MPSGraphModule::conv2D(
+  MPSGraphTensor* primaryTensor,
+  MPSGraphTensor* secondaryTensor,
+  MPSGraphTensor* biasTensor,
+  IntArrayRef stride,
+  IntArrayRef padding,
+  IntArrayRef dilation,
+  bool transpose,
+  IntArrayRef outputPadding,
+  int64_t groups,
+  bool is_depthwise) {
+  TORCH_CHECK([primaryTensor.shape count] < 5, "ConvTranspose 3D is not supported on MPS delegate");
+  TORCH_CHECK([primaryTensor dataType] == MPSDataTypeFloat32 || [primaryTensor dataType] == MPSDataTypeFloat16, "ConvTranspose 3D is not supported on MPS delegate");
+
+  // Handle 1D convolution.
+  bool isConv1D = ([secondaryTensor.shape count] == 3);
+  if (isConv1D) {
+    primaryTensor = [mpsGraph expandDimsOfTensor:primaryTensor
+                                            axis:2
+                                            name:@"unsqueezeInput"];
+    secondaryTensor = [mpsGraph expandDimsOfTensor:secondaryTensor
+                                              axis:2
+                                              name:@"unsqueezeWeight"];
+    if (stride.size() == 1) {
+      stride = IntArrayRef{1, stride[0]};
+      padding = IntArrayRef{0, padding[0]};
+      dilation = IntArrayRef{1, dilation[0]};
+      outputPadding = IntArrayRef{0, outputPadding[0]};
+    }
+  }
 
   if(is_depthwise){
     MPSGraphDepthwiseConvolution2DOpDescriptor* desc = [MPSGraphDepthwiseConvolution2DOpDescriptor
@@ -46,10 +72,10 @@ MPSGraphModule::conv2D(MPSGraphTensor* primaryTensor, MPSGraphTensor* secondaryT
     return depthwiseConv2DTensor;
   } else {
     MPSGraphConvolution2DOpDescriptor* desc = [MPSGraphConvolution2DOpDescriptor
-                                    descriptorWithStrideInX:stride[0]
-                                                  strideInY:stride[1]
-                                            dilationRateInX:dilation[0]
-                                            dilationRateInY:dilation[1]
+                                    descriptorWithStrideInX:stride[1]
+                                                  strideInY:stride[0]
+                                            dilationRateInX:dilation[1]
+                                            dilationRateInY:dilation[0]
                                                      groups:groups
                                                 paddingLeft:padding[1]
                                                paddingRight:padding[1]
@@ -74,7 +100,14 @@ MPSGraphModule::conv2D(MPSGraphTensor* primaryTensor, MPSGraphTensor* secondaryT
                                            secondaryTensor:biasTensor
                                                       name:@"conv2DWithBiasAdd"];
     }
-    return conv2DTensor;
+
+  if (isConv1D) {
+    conv2DTensor = [mpsGraph squeezeTensor:conv2DTensor
+                                      axis:2
+                                      name:@"squeeze"];
+  }
+
+  return conv2DTensor;
   }
 }
 } //namespace mps

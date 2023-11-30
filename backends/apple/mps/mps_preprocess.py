@@ -264,7 +264,6 @@ class MPSBackend(BackendDetails):
 
                     input_node = cast(torch.fx.Node, node.args[0]).meta["val"]
                     weight_node = cast(torch.fx.Node, node.args[1]).meta["val"]
-                    sizes = input_node.size()
                     groups = int(node.args[8])
 
                     # Convolution is depthwise if groups = input channels and output channel

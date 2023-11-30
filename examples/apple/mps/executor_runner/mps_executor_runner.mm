@@ -34,9 +34,6 @@
 #include <executorch/runtime/platform/runtime.h>
 #include <executorch/extension/evalue_util/print_evalue.h>
 
-#include <chrono>
-using namespace std::chrono;
-
 static constexpr size_t kRuntimeMemorySize = 4 * 1024U * 1024U; // 4 MB
 static uint8_t runtime_pool[kRuntimeMemorySize];
 static constexpr size_t kBundledAllocatorPoolSize = 16 * 1024U;

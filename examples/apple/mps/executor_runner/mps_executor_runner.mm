@@ -460,6 +460,7 @@ int main(int argc, char** argv) {
 
     if (strstr(model_path, "mv3")                  ||
         strstr(model_path, "mv2")                  ||
+        strstr(model_path, "conv")                 ||
         strstr(model_path, "vit")                  ||
         strstr(model_path, "resnet18")             ||
         strstr(model_path, "resnet50")             ||

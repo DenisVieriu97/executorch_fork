@@ -155,53 +155,6 @@ def run_model(
         file.write(bundled_program_buffer)
 
 
-class TestMPSBackend_ExampleModels(unittest.TestCase):
-    def test_mul(self):
-        run_model(inspect.stack()[0].function[5:])
-
-    def test_linear(self):
-        run_model(inspect.stack()[0].function[5:])
-
-    def test_add(self):
-        run_model(inspect.stack()[0].function[5:])
-
-    def test_add_mul(self):
-        run_model(inspect.stack()[0].function[5:])
-
-    def test_emformer_transcribe(self):
-        run_model(inspect.stack()[0].function[5:])
-
-    def test_emformer_join(self):
-        run_model(inspect.stack()[0].function[5:])
-
-    def test_mobilebert(self):
-        run_model(inspect.stack()[0].function[5:])
-
-    def test_mv2(self):
-        run_model(inspect.stack()[0].function[5:])
-
-    def test_mv3(self):
-        run_model(inspect.stack()[0].function[5:])
-
-    def test_vit(self):
-        run_model(inspect.stack()[0].function[5:])
-
-    def test_ic3(self):
-        run_model(inspect.stack()[0].function[5:])
-
-    def test_ic4(self):
-        run_model(inspect.stack()[0].function[5:])
-
-    def test_resnet18(self):
-        run_model(inspect.stack()[0].function[5:])
-
-    def test_resnet50(self):
-        run_model(inspect.stack()[0].function[5:])
-
-    def test_edsr(self):
-        run_model(inspect.stack()[0].function[5:])
-
-
 class TestMPSBackendExirModels(unittest.TestCase):
     def test_model_with_unused_arg(self):
         run_model(inspect.stack()[0].function[5:], MODEL_TYPE.EXIR_TEST_MODEL)

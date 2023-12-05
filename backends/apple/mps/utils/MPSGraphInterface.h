@@ -160,6 +160,7 @@ class MPSGraphModule {
   PyMPSGraphTensor* select(MPSGraphTensor* inputTensor, int dim, int index);
   PyMPSGraphTensor* view(MPSGraphTensor* inputTensor, IntArrayRef shape);
   PyMPSGraphTensor* permute(MPSGraphTensor* inputTensor, IntArrayRef axes);
+  PyMPSGraphTensor* cast_tensor(MPSGraphTensor* inputTensor, MPSDataType dtype);
   PyMPSGraphTensor* cumsum(MPSGraphTensor* inputTensor, int dim);
   PyMPSGraphTensor* addmm(
       MPSGraphTensor* biasTensor,
@@ -233,6 +234,10 @@ class MPSGraphModule {
       MPSGraphTensor* inputTensor,
       int64_t dim,
       MPSGraphTensor* indexTensor);
+
+  MPSDataType getDataType(MPSGraphTensor* input) {
+    return [input dataType];
+  }
 
   MPSGraph* getMPSGraph() {
     return mpsGraph;

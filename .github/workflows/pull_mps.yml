@@ -29,8 +29,8 @@ jobs:
         id: gather-models-mps
         run: |
           set -eux
-          if conda info --envs | grep -q "env-${{ runner.name }}"; then echo "base already exists"; else conda create -y -n "env-${{ runner.name }}"; fi
-          CONDA_ENV="env-${{ runner.name }}"
+          if conda info --envs | grep -q "env-${{ runner.name }}"; then echo "env-${{ runner.name }} already exists"; else conda create -y -n "env-${{ runner.name }}"; fi
+          CONDA_ENV="~/miniconda3/envs/env-${{ runner.name }}"
           if [[ -n "$CONDA_ENV" ]]; then
           # Use binaries under conda environment
           export PATH="$CONDA_ENV/bin":$PATH

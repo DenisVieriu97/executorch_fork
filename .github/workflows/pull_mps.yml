@@ -38,8 +38,8 @@ jobs:
 
           conda init zsh
           conda init
-          conda deactivate
           source ~/miniconda3/bin/activate
+          conda deactivate
           conda activate "$CONDA_ENV"
 
           source .ci/scripts/utils.sh

@@ -18,13 +18,13 @@ jobs:
       models: ${{ steps.gather-models-mps.outputs.models }}
       mps_models: ${{ steps.gather-models-mps.outputs.mps_models }}
     steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: 'true'
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
           cache: pip
+      - uses: actions/checkout@v4
+        with:
+            submodules: 'true'
       - name: Extract the list of models to test
         id: gather-models-mps
         run: |
@@ -58,9 +58,13 @@ jobs:
       matrix: ${{ fromJSON(needs.gather-models-mps.outputs.models) }}
       fail-fast: false
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
-          submodules: 'true'
+          python-version: '3.10'
+          cache: pip
+      - uses: actions/checkout@v4
+        with:
+            submodules: 'true'
       - name: Run test ${{ matrix.test }}
         if: always()
         run: |
@@ -98,9 +102,13 @@ jobs:
       matrix: ${{ fromJSON(needs.gather-models-mps.outputs.mps_models) }}
       fail-fast: false
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
-          submodules: 'true'
+          python-version: '3.10'
+          cache: pip
+      - uses: actions/checkout@v4
+        with:
+            submodules: 'true'
       - name: Run test ${{ matrix.test }}
         if: always()
         run: |

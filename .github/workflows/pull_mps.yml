@@ -36,7 +36,10 @@ jobs:
           export PATH="$CONDA_ENV/bin":$PATH
           fi
 
+          conda init zsh
+          conda init
           source ~/miniconda3/bin/activate
+          conda deactivate
           conda activate "$CONDA_ENV"
 
           source .ci/scripts/utils.sh

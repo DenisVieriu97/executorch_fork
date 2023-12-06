@@ -29,8 +29,8 @@ jobs:
         id: gather-models-mps
         run: |
           set -eux
-          if conda info --envs | grep -q conda-env-${{ runner.os }}; then echo "base already exists"; else conda create -y -n conda-env-${{ runner.os }}; fi
-          conda activate conda-env-${{ runner.os }}
+          if conda info --envs | grep -q "env-${{ runner.name }}"; then echo "base already exists"; else conda create -y -n "env-${{ runner.name }}"; fi
+          conda activate "env-${{ runner.name }}"
           source .ci/scripts/utils.sh
           # This is a simple Python script but as it tries to import executorch.examples.models,
           # it requires a whole bunch of ExecuTorch dependencies on the Docker image
@@ -52,8 +52,8 @@ jobs:
         if: always()
         run: |
           set -eux
-          if conda info --envs | grep -q conda-env-${{ runner.os }}; then echo "base already exists"; else conda create -y -n conda-env-${{ runner.os }}; fi
-          conda activate conda-env-${{ runner.os }}
+          if conda info --envs | grep -q "env-${{ runner.name }}"; then echo "base already exists"; else conda create -y -n "env-${{ runner.name }}"; fi
+          conda activate "env-${{ runner.name }}"
 
           WORKSPACE=$(pwd)
           pushd "${WORKSPACE}"
@@ -80,8 +80,8 @@ jobs:
         if: always()
         run: |
           set -eux
-          if conda info --envs | grep -q conda-env-${{ runner.os }}; then echo "base already exists"; else conda create -y -n conda-env-${{ runner.os }}; fi
-          conda activate conda-env-${{ runner.os }}
+          if conda info --envs | grep -q "env-${{ runner.name }}"; then echo "base already exists"; else conda create -y -n "env-${{ runner.name }}"; fi
+          conda activate "env-${{ runner.name }}"
 
           WORKSPACE=$(pwd)
           pushd "${WORKSPACE}"

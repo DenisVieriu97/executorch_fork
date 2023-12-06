@@ -37,7 +37,8 @@ jobs:
           fi
 
           conda init zsh
-          conda activate "{$CONDA_ENV}"
+          conda init
+          conda activate "$CONDA_ENV"
 
           source .ci/scripts/utils.sh
           # This is a simple Python script but as it tries to import executorch.examples.models,

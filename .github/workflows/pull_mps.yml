@@ -30,7 +30,12 @@ jobs:
         run: |
           set -eux
           if conda info --envs | grep -q "env-${{ runner.name }}"; then echo "env-${{ runner.name }} already exists"; else conda create -y -n "env-${{ runner.name }}"; fi
-          CONDA_ENV="env-${{ runner.name }}"
+          CONDA_ENV="~/miniconda3/envs/env-${{ runner.name }}"
+          if [[ -n "$CONDA_ENV" ]]; then
+          # Use binaries under conda environment
+          export PATH="$CONDA_ENV/bin":$PATH
+          fi
+
           source ~/miniconda3/bin/activate
           conda activate "$CONDA_ENV"
 
@@ -55,10 +60,8 @@ jobs:
         if: always()
         run: |
           set -eux
-          if conda info --envs | grep -q "env-${{ runner.name }}"; then echo "env-${{ runner.name }} already exists"; else conda create -y -n "env-${{ runner.name }}"; fi
-          CONDA_ENV="env-${{ runner.name }}"
-          source ~/miniconda3/bin/activate
-          conda activate "$CONDA_ENV"
+          if conda info --envs | grep -q "env-${{ runner.name }}"; then echo "base already exists"; else conda create -y -n "env-${{ runner.name }}"; fi
+          conda activate "env-${{ runner.name }}"
 
           WORKSPACE=$(pwd)
           pushd "${WORKSPACE}"
@@ -85,10 +88,8 @@ jobs:
         if: always()
         run: |
           set -eux
-          if conda info --envs | grep -q "env-${{ runner.name }}"; then echo "env-${{ runner.name }} already exists"; else conda create -y -n "env-${{ runner.name }}"; fi
-          CONDA_ENV="env-${{ runner.name }}"
-          source ~/miniconda3/bin/activate
-          conda activate "$CONDA_ENV"
+          if conda info --envs | grep -q "env-${{ runner.name }}"; then echo "base already exists"; else conda create -y -n "env-${{ runner.name }}"; fi
+          conda activate "env-${{ runner.name }}"
 
           WORKSPACE=$(pwd)
           pushd "${WORKSPACE}"

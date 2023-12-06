@@ -29,7 +29,9 @@ jobs:
         id: gather-models-mps
         run: |
           set -eux
-          if conda info --envs | grep -q "env-${{ runner.name }}"; then echo "env-${{ runner.name }} already exists"; else conda create -y -n "env-${{ runner.name }}"; fi
+
+          # Conda setup
+          if conda info --envs | grep -w -q "env-${{ runner.name }}"; then echo "env-${{ runner.name }} already exists"; else conda create -y -n "env-${{ runner.name }}"; fi
           CONDA_ENV="~/miniconda3/envs/env-${{ runner.name }}"
           if [[ -n "$CONDA_ENV" ]]; then
           # Use binaries under conda environment
@@ -63,8 +65,20 @@ jobs:
         if: always()
         run: |
           set -eux
-          if conda info --envs | grep -q "env-${{ runner.name }}"; then echo "base already exists"; else conda create -y -n "env-${{ runner.name }}"; fi
-          conda activate "env-${{ runner.name }}"
+
+          # Conda setup
+          if conda info --envs | grep -w -q "env-${{ runner.name }}"; then echo "env-${{ runner.name }} already exists"; else conda create -y -n "env-${{ runner.name }}"; fi
+          CONDA_ENV="~/miniconda3/envs/env-${{ runner.name }}"
+          if [[ -n "$CONDA_ENV" ]]; then
+          # Use binaries under conda environment
+          export PATH="$CONDA_ENV/bin":$PATH
+          fi
+
+          conda init zsh
+          conda init
+          source ~/miniconda3/bin/activate
+          conda deactivate
+          conda activate "$CONDA_ENV"
 
           WORKSPACE=$(pwd)
           pushd "${WORKSPACE}"
@@ -91,8 +105,20 @@ jobs:
         if: always()
         run: |
           set -eux
-          if conda info --envs | grep -q "env-${{ runner.name }}"; then echo "base already exists"; else conda create -y -n "env-${{ runner.name }}"; fi
-          conda activate "env-${{ runner.name }}"
+
+          # Conda setup
+          if conda info --envs | grep -w -q "env-${{ runner.name }}"; then echo "env-${{ runner.name }} already exists"; else conda create -y -n "env-${{ runner.name }}"; fi
+          CONDA_ENV="~/miniconda3/envs/env-${{ runner.name }}"
+          if [[ -n "$CONDA_ENV" ]]; then
+          # Use binaries under conda environment
+          export PATH="$CONDA_ENV/bin":$PATH
+          fi
+
+          conda init zsh
+          conda init
+          source ~/miniconda3/bin/activate
+          conda deactivate
+          conda activate "$CONDA_ENV"
 
           WORKSPACE=$(pwd)
           pushd "${WORKSPACE}"

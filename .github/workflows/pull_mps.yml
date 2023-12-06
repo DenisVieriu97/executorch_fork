@@ -31,7 +31,7 @@ jobs:
           set -eux
 
           # Conda setup
-          if conda info --envs | grep -w -q "env-${{ runner.name }}"; then echo "env-${{ runner.name }} already exists"; else conda create -y -n "env-${{ runner.name }}" python=3.9; fi
+          if conda info --envs | grep -w -q "env-${{ runner.name }}"; then echo "env-${{ runner.name }} already exists"; else conda create -y -n "env-${{ runner.name }}" python=3.10; fi
           CONDA_ENV="~/miniconda3/envs/env-${{ runner.name }}"
           if [[ -n "$CONDA_ENV" ]]; then
           # Use binaries under conda environment
@@ -67,7 +67,7 @@ jobs:
           set -eux
 
           # Conda setup
-          if conda info --envs | grep -w -q "env-${{ runner.name }}"; then echo "env-${{ runner.name }} already exists"; else conda create -y -n "env-${{ runner.name }}" python=3.9; fi
+          if conda info --envs | grep -w -q "env-${{ runner.name }}"; then echo "env-${{ runner.name }} already exists"; else conda create -y -n "env-${{ runner.name }}" python=3.10; fi
           CONDA_ENV="~/miniconda3/envs/env-${{ runner.name }}"
           if [[ -n "$CONDA_ENV" ]]; then
           # Use binaries under conda environment
@@ -107,7 +107,7 @@ jobs:
           set -eux
 
           # Conda setup
-          if conda info --envs | grep -w -q "env-${{ runner.name }}"; then echo "env-${{ runner.name }} already exists"; else conda create -y -n "env-${{ runner.name }}" python=3.9; fi
+          if conda info --envs | grep -w -q "env-${{ runner.name }}"; then echo "env-${{ runner.name }} already exists"; else conda create -y -n "env-${{ runner.name }}" python=3.10; fi
           CONDA_ENV="~/miniconda3/envs/env-${{ runner.name }}"
           if [[ -n "$CONDA_ENV" ]]; then
           # Use binaries under conda environment

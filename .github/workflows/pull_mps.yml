@@ -43,6 +43,7 @@ jobs:
           source ~/miniconda3/bin/activate
           conda deactivate
           conda activate "$CONDA_ENV"
+          conda install -y cmake
 
           source .ci/scripts/utils.sh
           # This is a simple Python script but as it tries to import executorch.examples.models,
@@ -83,6 +84,7 @@ jobs:
           source ~/miniconda3/bin/activate
           conda deactivate
           conda activate "$CONDA_ENV"
+          conda install -y cmake
 
           WORKSPACE=$(pwd)
           pushd "${WORKSPACE}"
@@ -127,6 +129,7 @@ jobs:
           source ~/miniconda3/bin/activate
           conda deactivate
           conda activate "$CONDA_ENV"
+          conda install -y cmake
 
           WORKSPACE=$(pwd)
           pushd "${WORKSPACE}"

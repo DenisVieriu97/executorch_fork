@@ -36,7 +36,7 @@ jobs:
           export PATH="$CONDA_ENV/bin":$PATH
           fi
 
-          conda activate "env-${{ runner.name }}"
+          conda activate "{$CONDA_ENV}"
 
           source .ci/scripts/utils.sh
           # This is a simple Python script but as it tries to import executorch.examples.models,

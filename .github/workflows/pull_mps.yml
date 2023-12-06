@@ -85,10 +85,10 @@ jobs:
           MODEL_NAME=${{ matrix.model }}
           BUILD_TOOL=${{ matrix.build-tool }}
           # Setup MacOS dependencies as there is no Docker support on MacOS atm
-          PYTHON_EXECUTABLE=python bash .ci/scripts/setup-macos.sh "${BUILD_TOOL}"
-          PYTHON_EXECUTABLE=python bash backends/apple/mps/install_requirements.sh
+          PYTHON_EXECUTABLE=$(which python3) bash .ci/scripts/setup-macos.sh "${BUILD_TOOL}"
+          PYTHON_EXECUTABLE=$(which python3) bash backends/apple/mps/install_requirements.sh
           # Build and test ExecuTorch
-          PYTHON_EXECUTABLE=python bash backends/apple/mps/ci/scripts/test-mps.sh "${MODEL_NAME}" "${BUILD_TOOL}" false
+          PYTHON_EXECUTABLE=$(which python3) bash backends/apple/mps/ci/scripts/test-mps.sh "${MODEL_NAME}" "${BUILD_TOOL}" false
           popd
   test-mps:
     name: test-mps
@@ -125,8 +125,8 @@ jobs:
           MODEL_NAME=${{ matrix.model }}
           BUILD_TOOL=${{ matrix.build-tool }}
           # Setup MacOS dependencies as there is no Docker support on MacOS atm
-          PYTHON_EXECUTABLE=python bash .ci/scripts/setup-macos.sh "${BUILD_TOOL}"
-          PYTHON_EXECUTABLE=python bash backends/apple/mps/install_requirements.sh
+          PYTHON_EXECUTABLE=python3 bash .ci/scripts/setup-macos.sh "${BUILD_TOOL}"
+          PYTHON_EXECUTABLE=python3 bash backends/apple/mps/install_requirements.sh
           # Build and test ExecuTorch
-          PYTHON_EXECUTABLE=python bash backends/apple/mps/ci/scripts/test-mps.sh "${MODEL_NAME}" "${BUILD_TOOL}" true
+          PYTHON_EXECUTABLE=python3 bash backends/apple/mps/ci/scripts/test-mps.sh "${MODEL_NAME}" "${BUILD_TOOL}" true
           popd

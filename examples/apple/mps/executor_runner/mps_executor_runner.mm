@@ -13,6 +13,8 @@
  */
 
 #include <memory>
+#include <numeric>
+#include <iomanip>
 #include <iostream>
 
 #include <gflags/gflags.h>
@@ -64,6 +66,11 @@ DEFINE_bool(
     profile,
     false,
     "True for showing profile data (e.g execution time)");
+
+DEFINE_bool(
+    skip_warmup,
+    false,
+    "If true, a warmup iteration won't be executed.");
 
 using namespace torch::executor;
 using torch::executor::util::FileDataLoader;
@@ -229,6 +236,18 @@ bool tensors_are_close_(
 }
 
 int main(int argc, char** argv) {
+  {
+    const char* usage = R"(MPS Executor Runner. Sample usage:
+  mps_executor_runner --model_path model.pte)";
+    gflags::SetUsageMessage(usage);
+  }
+
+  if (argc == 1) {
+    ET_LOG(Error, "No options provided.");
+    gflags::ShowUsageWithFlags(argv[0]);
+    return 1;
+  }
+
   runtime_init();
 
   gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -412,20 +431,33 @@ int main(int argc, char** argv) {
   }
   ET_LOG(Info, "Inputs prepared.");
 
-  for (int i = 0; i < FLAGS_num_runs; i++) {
+  int num_iterations = FLAGS_num_runs + (FLAGS_skip_warmup ? 0 : 1);
+  std::vector<float> exec_times;
+  exec_times.reserve(FLAGS_num_runs);
+  for (int i = 0; i < num_iterations; i++) {
     auto start_exec_time = high_resolution_clock::now();
     // Run the model.
     Error status = method->execute();
     auto end_exec_time = high_resolution_clock::now();
-    auto duration = duration_cast<milliseconds>(end_exec_time - start_exec_time);
+    auto duration = duration_cast<microseconds>(end_exec_time - start_exec_time);
+    exec_times.push_back(duration.count());
     if (FLAGS_profile) {
-      ET_LOG(Info, "[Run %d] Inference time: %lld milliseconds", i, duration.count());
+      const float miliseconds = static_cast<float>(duration.count()) / 1000.f;
+      ET_LOG(Info, "[Run %d] Inference time: .3f miliseconds", i, miliseconds);
     }
     ET_CHECK_MSG(
         status == Error::Ok,
         "Execution of method %s failed with status 0x%" PRIx32,
         method_name,
         status);
+  }
+  if (FLAGS_profile && FLAGS_num_runs) {
+    auto itr = exec_times.begin();
+    if (!FLAGS_skip_warmup)
+      itr++;
+
+    const float avg_time = (std::reduce(itr, exec_times.end()) / static_cast<float>(FLAGS_num_runs)) / 1000.f;
+    std::cout << "Average inference time: " << std::setprecision(2) << std::fixed << avg_time << " miliseconds\n";
   }
   ET_LOG(Info, "Model executed successfully.");
 

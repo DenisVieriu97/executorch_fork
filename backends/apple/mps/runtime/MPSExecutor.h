@@ -52,7 +52,8 @@ class MPSExecutor {
     return executable_;
   }
 
-  __ET_NODISCARD Error forward(std::vector<const Tensor*>& outputs);
+  __ET_NODISCARD Error
+  forward(std::vector<const Tensor*>& inputs, std::vector<const Tensor*>& outputs);
 
   __ET_NODISCARD Error
   set_inputs_outputs(std::vector<const Tensor*>& inputs, std::vector<const Tensor*>& outputs);

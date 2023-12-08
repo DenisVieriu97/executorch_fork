@@ -26,31 +26,25 @@ static const size_t kCmdBufAdaptiveCommitThreshold = MB(64);
 MPSStream::MPSStream() {
   _commandQueue = [MPSDevice::getInstance()->device() newCommandQueue];
   _serialQueue = dispatch_queue_create("metal gpu stream", nullptr);
-  _executionDescriptor = [MPSGraphExecutionDescriptor new];
-  _executableExecutionDescriptor = [MPSGraphExecutableExecutionDescriptor new];
   _compilationDescriptor = [MPSGraphCompilationDescriptor new];
-
-  // internal CommitAndContinue heuristic of MPSGraph is disabled, and we
-  // control it via Adaptive Commit in Executorch-side
-  _executionDescriptor.enableCommitAndContinue = false;
-
-  // Choose level which optimizes for GPU
-  _compilationDescriptor.optimizationLevel = MPSGraphOptimizationLevel0;
-  _executionDescriptor.compilationDescriptor =  _compilationDescriptor;
+  _compilationDescriptor.waitForCompilationCompletion = YES;
+  _executableExecutionDescriptor = [MPSGraphExecutableExecutionDescriptor new];
+  _executableExecutionDescriptor.waitUntilCompleted = !commitAndContinueEnabled();
 }
 
 MPSStream::~MPSStream() {
   [_commandQueue release];
   _commandQueue = nil;
-  [_executionDescriptor release];
-  [_compilationDescriptor release];
   [_executableExecutionDescriptor release];
+  [_compilationDescriptor release];
 
-  _executionDescriptor = nil;
-  _compilationDescriptor = nil;
   _executableExecutionDescriptor = nil;
-
+  _compilationDescriptor = nil;
   assert(_commandBuffer == nil);
+}
+
+bool MPSStream::hasLivecommandBuffer() {
+  return _commandBuffer;
 }
 
 MPSCommandBuffer* MPSStream::commandBuffer() {
@@ -94,6 +88,16 @@ Error MPSStream::synchronize(SyncType syncType) {
   }
 
   return Error::Ok;
+}
+
+MPSGraphCompilationDescriptor*
+MPSStream::getCompilationDescriptor() {
+  return _compilationDescriptor;
+}
+
+MPSGraphExecutableExecutionDescriptor*
+MPSStream::getExecutableExecutionDescriptor() {
+  return _executableExecutionDescriptor;
 }
 
 bool MPSStream::commitAndContinueEnabled() {

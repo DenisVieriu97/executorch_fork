@@ -99,7 +99,7 @@ class MPSBackend final : public PyTorchBackendInterface {
       return err;
     }
 
-    err = executor->forward(output_pointers);
+    err = executor->forward(input_pointers, output_pointers);
     return err;
   }
 

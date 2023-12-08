@@ -18,6 +18,7 @@
 
 @interface MPSNDArrayDescriptor ()
 @property (readwrite, nonatomic) BOOL preferPackedRows;
+@property (readwrite, nonatomic)  NSUInteger rowBytes;
 @end
 
 
@@ -40,16 +41,18 @@ MPSExecutor::set_inputs_outputs(std::vector<const Tensor*>& inputs, std::vector<
   inputsArray_ = [[NSMutableArray<MPSGraphTensorData *> alloc] init];
   outputsArray_ = [[NSMutableArray<MPSGraphTensorData *> alloc] init];
 
-#if TARGET_OS_SIMULATOR
-  output_buffers_ = [[NSMutableArray<id<MTLBuffer>> alloc] init];
-#endif
+  auto calculateRowBytes = [] (MPSNDArrayDescriptor *desc) {
+    auto rowSize = [desc lengthOfDimension:0];
+    auto byteTypes = MPSSizeofMPSDataType([desc dataType]);
+    return ((rowSize * byteTypes + 63) / 64) * 64;
+  };
 
   for (int i = 0; i < inputs.size(); i++) {
     MPSNDArrayDescriptor *tensorDesc = [MPSNDArrayDescriptor descriptorWithDataType:[inputShapes_[i] dataType]
                                                                               shape:[inputShapes_[i] shape]];
-    tensorDesc.preferPackedRows = YES;
-    id<MTLBuffer> inputBuffer = ::mps::getMTLBufferStorage(*inputs[i]);
-    MPSNDArray *ndArrayData = [[MPSNDArray alloc] initWithBuffer:inputBuffer descriptor:tensorDesc];
+    tensorDesc.rowBytes = calculateRowBytes(tensorDesc);
+    MPSNDArray *ndArrayData = [[MPSNDArray alloc] initWithDevice:MPSDevice::getInstance()->device()
+                                                      descriptor:tensorDesc];
     MPSGraphTensorData* tensorData = [[MPSGraphTensorData alloc] initWithMPSNDArray:ndArrayData];
     [inputsArray_ addObject:tensorData];
   }
@@ -57,37 +60,48 @@ MPSExecutor::set_inputs_outputs(std::vector<const Tensor*>& inputs, std::vector<
   for (int i = 0; i < outputs.size(); i++) {
     MPSNDArrayDescriptor *tensorDesc = [MPSNDArrayDescriptor descriptorWithDataType:[outputShapes_[i] dataType]
                                                                               shape:[outputShapes_[i] shape]];
-    tensorDesc.preferPackedRows = YES;
-    id<MTLBuffer> outputBuffer = ::mps::getMTLBufferStorage(*outputs[i]);
-    MPSNDArray *ndArrayData = [[MPSNDArray alloc] initWithBuffer:outputBuffer descriptor:tensorDesc];
+    tensorDesc.rowBytes = calculateRowBytes(tensorDesc);
+    MPSNDArray *ndArrayData = [[MPSNDArray alloc] initWithDevice:MPSDevice::getInstance()->device()
+                                                      descriptor:tensorDesc];
     MPSGraphTensorData* tensorData = [[MPSGraphTensorData alloc] initWithMPSNDArray:ndArrayData];
     [outputsArray_ addObject:tensorData];
-#if TARGET_OS_SIMULATOR
-    [output_buffers_ addObject:[outputBuffer retain]];
-#endif
   }
 
   return Error::Ok;
 }
 
-__ET_NODISCARD Error MPSExecutor::forward(std::vector<const Tensor*>& outputs) {
+__ET_NODISCARD Error MPSExecutor::forward(std::vector<const Tensor*>& inputs,
+                                          std::vector<const Tensor*>& outputs) {
   Error err = Error::Ok;
   MPSStream* mpsStream = getDefaultMPSStream();
-  id<MTLCommandBuffer> commandBuffer = mpsStream->commandBuffer();
-  [executable_ encodeToCommandBuffer:commandBuffer
-                        inputsArray:inputsArray_
-                        resultsArray:outputsArray_
-                executionDescriptor:nil];
-  if (mps::delegate::getDefaultMPSStream()->commitAndContinueEnabled()) {
+  if (!mpsStream->commitAndContinueEnabled() && !mpsStream->hasLivecommandBuffer()) {
+    for (int i = 0; i < outputs.size(); i++)
+      [inputsArray_[i].mpsndarray writeBytes:inputs[i]->mutable_data_ptr<uint8_t>()
+                                 strideBytes:nil];
+
+    [executable_ runWithMTLCommandQueue:mpsStream->commandQueue()
+                            inputsArray:inputsArray_
+                           resultsArray:outputsArray_
+                    executionDescriptor:mpsStream->getExecutableExecutionDescriptor()];
+  } else {
+    // TODO input copies.
+    exit(1);
+    id<MTLCommandBuffer> commandBuffer = mpsStream->commandBuffer();
+    [executable_ encodeToCommandBuffer:commandBuffer
+                          inputsArray:inputsArray_
+                          resultsArray:outputsArray_
+                  executionDescriptor:mpsStream->getExecutableExecutionDescriptor()];
+  }
+
+  if (mpsStream->commitAndContinueEnabled()) {
+    // TODO command buffer completion handler needs to copy the data.
+    exit(1);
     err = mpsStream->synchronize(SyncType::COMMIT_AND_CONTINUE);
   } else {
     err = mpsStream->synchronize(SyncType::COMMIT_AND_WAIT);
-#if TARGET_OS_SIMULATOR
-  for (int i = 0; i < outputs.size(); i++) {
-    uint8_t* data = outputs[i]->mutable_data_ptr<uint8_t>();
-    memcpy(data, [output_buffers_[i] contents], [output_buffers_[i] length]);
-  }
-#endif
+    for (int i = 0; i < outputs.size(); i++)
+      [outputsArray_[i].mpsndarray readBytes:outputs[i]->mutable_data_ptr<uint8_t>()
+                                strideBytes:nil];
   }
 
   ET_CHECK_OR_RETURN_ERROR(

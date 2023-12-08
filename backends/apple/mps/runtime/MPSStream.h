@@ -37,6 +37,7 @@ class MPSStream {
     return _serialQueue;
   }
 
+  bool hasLivecommandBuffer();
   MPSCommandBuffer* commandBuffer();
   id<MTLComputeCommandEncoder> commandEncoder();
   void endKernelCoalescing();
@@ -44,15 +45,16 @@ class MPSStream {
   // void commitAdaptive(const TensorList& inputTensors, const TensorList&
   // outputTensors, void* profilerHandle);
   bool commitAndContinueEnabled();
+  MPSGraphCompilationDescriptor* getCompilationDescriptor();
+  MPSGraphExecutableExecutionDescriptor* getExecutableExecutionDescriptor();
 
  private:
   id<MTLCommandQueue> _commandQueue = nil;
   MPSCommandBuffer* _commandBuffer = nil;
   MPSCommandBuffer* _prevCommandBuffer = nil;
   id<MTLComputeCommandEncoder> _commandEncoder = nil;
-  MPSGraphExecutionDescriptor* _executionDescriptor = nil;
-  MPSGraphExecutableExecutionDescriptor* _executableExecutionDescriptor = nil;
   MPSGraphCompilationDescriptor* _compilationDescriptor = nil;
+  MPSGraphExecutableExecutionDescriptor* _executableExecutionDescriptor = nil;
   dispatch_queue_t _serialQueue = nullptr;
   // CommitAndContinue is disabled by default
   bool _enableCommitAndContinue = false;

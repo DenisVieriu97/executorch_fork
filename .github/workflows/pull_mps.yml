@@ -44,6 +44,7 @@ jobs:
           source .ci/scripts/utils.sh
           # This is a simple Python script but as it tries to import executorch.examples.models,
           # it requires a whole bunch of ExecuTorch dependencies on the Docker image
+          pip install ninja
           install_pip_dependencies
           install_executorch
           PYTHONPATH="${PWD}" python -m backends.apple.mps.ci.scripts.gather_test_models_mps

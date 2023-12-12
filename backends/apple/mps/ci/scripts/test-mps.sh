@@ -40,6 +40,7 @@ build_cmake_mps_executor_runner() {
     && cd ${CMAKE_OUTPUT_DIR} \
     && cmake -DBUCK2=buck2 \
       -DEXECUTORCH_BUILD_MPS=ON \
+      -DEXECUTORCH_BUILD_SDK=ON \
       -DCMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH" \
       -DPYTHON_EXECUTABLE="$PYTHON_EXECUTABLE" ..)
 

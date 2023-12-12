@@ -155,53 +155,6 @@ def run_model(
         file.write(bundled_program_buffer)
 
 
-class TestMPSBackend_ExampleModels(unittest.TestCase):
-    def test_mul(self):
-        run_model(inspect.stack()[0].function[5:])
-
-    def test_linear(self):
-        run_model(inspect.stack()[0].function[5:])
-
-    def test_add(self):
-        run_model(inspect.stack()[0].function[5:])
-
-    def test_add_mul(self):
-        run_model(inspect.stack()[0].function[5:])
-
-    def test_emformer_transcribe(self):
-        run_model(inspect.stack()[0].function[5:])
-
-    def test_emformer_join(self):
-        run_model(inspect.stack()[0].function[5:])
-
-    def test_mobilebert(self):
-        run_model(inspect.stack()[0].function[5:])
-
-    def test_mv2(self):
-        run_model(inspect.stack()[0].function[5:])
-
-    def test_mv3(self):
-        run_model(inspect.stack()[0].function[5:])
-
-    def test_vit(self):
-        run_model(inspect.stack()[0].function[5:])
-
-    def test_ic3(self):
-        run_model(inspect.stack()[0].function[5:])
-
-    def test_ic4(self):
-        run_model(inspect.stack()[0].function[5:])
-
-    def test_resnet18(self):
-        run_model(inspect.stack()[0].function[5:])
-
-    def test_resnet50(self):
-        run_model(inspect.stack()[0].function[5:])
-
-    def test_edsr(self):
-        run_model(inspect.stack()[0].function[5:])
-
-
 class TestMPSBackendExirModels(unittest.TestCase):
     def test_model_with_unused_arg(self):
         run_model(inspect.stack()[0].function[5:], MODEL_TYPE.EXIR_TEST_MODEL)
@@ -503,6 +456,54 @@ class TestMPSUnitOpTesting(TestMPS):
             dilation=dilation,
             bias=True,
         )
+        conv.eval()
+        self.lower_and_test_with_partitioner(
+            conv, example_inputs, func_name=inspect.stack()[0].function[5:]
+        )
+
+    def test_conv1d(self):
+        example_inputs = (torch.randn(1, 57, 40),)
+        stride = random.randint(1, 4)
+        padding = random.randint(1, 4)
+        conv = torch.nn.Conv1d(57, 20, stride=stride, padding=padding, kernel_size=3, bias=random.choice([True, False]))
+        conv.eval()
+        self.lower_and_test_with_partitioner(
+            conv, example_inputs, func_name=inspect.stack()[0].function[5:]
+        )
+
+    def test_conv2d(self):
+        N = 10
+        C = 10
+        H = 4
+        W = 6
+        groups = 2
+        input_memory_format = torch.contiguous_format
+        weight_memory_format = torch.contiguous_format
+        strideX = random.randint(1, 4)
+        strideY = random.randint(1, 4)
+        example_inputs = (torch.randn(N, C, H, W).to(memory_format=input_memory_format), )
+        conv = torch.nn.Conv2d(
+            in_channels=N, out_channels=C, kernel_size=H, groups=groups, stride=(strideX, strideY))
+        conv.weight.data = conv.weight.to(memory_format=weight_memory_format)
+        conv.eval()
+        self.lower_and_test_with_partitioner(
+            conv, example_inputs, func_name=inspect.stack()[0].function[5:]
+        )
+
+    def test_conv2d_to_depthwise_conv_3d(self):
+        N = 10
+        C = 10
+        H = 4
+        W = 6
+        groups = 10
+        input_memory_format = torch.contiguous_format
+        weight_memory_format = torch.contiguous_format
+        strideX = random.randint(1, 4)
+        strideY = random.randint(1, 4)
+        example_inputs = (torch.randn(N, C, H, W).to(memory_format=input_memory_format), )
+        conv = torch.nn.Conv2d(
+            in_channels=N, out_channels=C, kernel_size=H, groups=groups, stride=(strideX, strideY))
+        conv.weight.data = conv.weight.to(memory_format=weight_memory_format)
         conv.eval()
         self.lower_and_test_with_partitioner(
             conv, example_inputs, func_name=inspect.stack()[0].function[5:]

@@ -118,15 +118,15 @@ print_cmake_info() {
 install_buck
 install_pip_dependencies
 
+# print_cmake_info
+# install_pytorch_and_domains
+# install_flatc_from_source
+install_executorch
+# build_executorch_runner "${BUILD_TOOL}"
+
 # TODO(huydhn): Unlike our self-hosted runner, GitHub runner doesn't have access
 # to our infra, so compiler caching needs to be setup differently using GitHub
 # cache. However, I need to figure out how to set that up for Nova MacOS job
 if [[ -z "${GITHUB_RUNNER:-}" ]]; then
   install_sccache
 fi
-
-print_cmake_info
-install_pytorch_and_domains
-install_flatc_from_source
-install_executorch
-build_executorch_runner "${BUILD_TOOL}"

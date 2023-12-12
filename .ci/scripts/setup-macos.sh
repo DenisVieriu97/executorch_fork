@@ -122,7 +122,7 @@ install_pip_dependencies
 # install_pytorch_and_domains
 # install_flatc_from_source
 install_executorch
-build_executorch_runner "${BUILD_TOOL}"
+# build_executorch_runner "${BUILD_TOOL}"
 
 # TODO(huydhn): Unlike our self-hosted runner, GitHub runner doesn't have access
 # to our infra, so compiler caching needs to be setup differently using GitHub

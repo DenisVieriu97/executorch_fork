@@ -120,7 +120,7 @@ install_pip_dependencies
 
 print_cmake_info
 # install_pytorch_and_domains
-install_flatc_from_source
+# install_flatc_from_source
 install_executorch
 build_executorch_runner "${BUILD_TOOL}"
 

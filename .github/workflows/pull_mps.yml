@@ -88,6 +88,10 @@ jobs:
           python --version
 
           conda install -y cmake
+          pip install ninja
+          install_pip_dependencies
+          install_executorch
+          pip install .
 
           WORKSPACE=$(pwd)
           pushd "${WORKSPACE}"
@@ -140,6 +144,10 @@ jobs:
           python --version
 
           conda install -y cmake
+          pip install ninja
+          install_pip_dependencies
+          install_executorch
+          pip install .
 
           WORKSPACE=$(pwd)
           pushd "${WORKSPACE}"

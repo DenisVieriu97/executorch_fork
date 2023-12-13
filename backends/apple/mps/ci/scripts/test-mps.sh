@@ -56,7 +56,7 @@ test_model_with_mps() {
 
   "${PYTHON_EXECUTABLE}" -m examples.apple.mps.scripts.mps_example --model_name="${MODEL_NAME}" --bundled
 
-  OUTPUT_MODEL_PATH="${MODEL_NAME}_mps_bundled.pte"
+  OUTPUT_MODEL_PATH="${MODEL_NAME}_mps_bundled_fp16.pte"
 
   if [[ "${BUILD_TOOL}" == "cmake" ]]; then
     if [[ ! -f ${CMAKE_OUTPUT_DIR}/examples/apple/mps/mps_executor_runner ]]; then

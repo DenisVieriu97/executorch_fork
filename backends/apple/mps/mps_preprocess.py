@@ -190,8 +190,6 @@ class MPSBackend(BackendDetails):
                 if cast_to_fp32:
                     def handle(value):
                         current_data_type = mpsGraph.get_data_type(value)
-                        if current_data_type == get_mps_data_type(torch.float16):
-                            value = mpsGraph.cast_tensor(value, get_mps_data_type(torch.float32))
                         return value
                     value = GraphNodesDict._apply_to_structure(value, handle)
                 dict.__setitem__(self, key, value)
@@ -828,7 +826,10 @@ class MPSBackend(BackendDetails):
                 for i in range(len(node.args)):
                     for j in range(len(node.args[i])):
                         # Call get_node explicitly to preserve the output signature.
-                        output_nodes.append(graphNodes.get_node(node.args[i][j].name))
+                        out_node = graphNodes.get_node(node.args[i][j].name)
+                        if convert_model_to_fp16 and mpsGraph.get_data_type(out_node) == get_mps_data_type(torch.float16):
+                            out_node = mpsGraph.cast_tensor(out_node, get_mps_data_type(torch.float32))
+                        output_nodes.append(out_node)
                 mpsGraph.set_outputs(*output_nodes)
             else:
                 torch._assert(

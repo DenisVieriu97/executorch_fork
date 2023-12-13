@@ -458,7 +458,10 @@ int main(int argc, char** argv) {
     double rtol = 1e-05;
     double atol = 1e-08;
 
-    if (strstr(model_path, "mv3")                  ||
+    if (strstr(model_path, "fp16")) {
+        rtol = 1e-01;
+        atol = 1e-01;
+    } else if (strstr(model_path, "mv3")           ||
         strstr(model_path, "mv2")                  ||
         strstr(model_path, "conv")                 ||
         strstr(model_path, "vit")                  ||

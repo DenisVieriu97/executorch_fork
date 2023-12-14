@@ -103,7 +103,9 @@ def run_model(
     # Step 3: Lower to MPSGraph
     logging.info("Step 3: Lowering to MPSGraph...")
     compile_specs = [CompileSpec("use_fp16", bytes([use_fp16]))]
-    lowered_module = to_backend(MPSBackend.__name__, edge.exported_program, compile_specs)
+    lowered_module = to_backend(
+        MPSBackend.__name__, edge.exported_program, compile_specs
+    )
 
     logging.info("Step 4: Capturing executorch program with lowered module...")
 
@@ -468,7 +470,14 @@ class TestMPSUnitOpTesting(TestMPS):
         example_inputs = (torch.randn(1, 57, 40),)
         stride = random.randint(1, 4)
         padding = random.randint(1, 4)
-        conv = torch.nn.Conv1d(57, 20, stride=stride, padding=padding, kernel_size=3, bias=random.choice([True, False]))
+        conv = torch.nn.Conv1d(
+            57,
+            20,
+            stride=stride,
+            padding=padding,
+            kernel_size=3,
+            bias=random.choice([True, False]),
+        )
         conv.eval()
         self.lower_and_test_with_partitioner(
             conv, example_inputs, func_name=inspect.stack()[0].function[5:]
@@ -484,9 +493,16 @@ class TestMPSUnitOpTesting(TestMPS):
         weight_memory_format = torch.contiguous_format
         strideX = random.randint(1, 4)
         strideY = random.randint(1, 4)
-        example_inputs = (torch.randn(N, C, H, W).to(memory_format=input_memory_format), )
+        example_inputs = (
+            torch.randn(N, C, H, W).to(memory_format=input_memory_format),
+        )
         conv = torch.nn.Conv2d(
-            in_channels=N, out_channels=C, kernel_size=H, groups=groups, stride=(strideX, strideY))
+            in_channels=N,
+            out_channels=C,
+            kernel_size=H,
+            groups=groups,
+            stride=(strideX, strideY),
+        )
         conv.weight.data = conv.weight.to(memory_format=weight_memory_format)
         conv.eval()
         self.lower_and_test_with_partitioner(
@@ -503,9 +519,16 @@ class TestMPSUnitOpTesting(TestMPS):
         weight_memory_format = torch.contiguous_format
         strideX = random.randint(1, 4)
         strideY = random.randint(1, 4)
-        example_inputs = (torch.randn(N, C, H, W).to(memory_format=input_memory_format), )
+        example_inputs = (
+            torch.randn(N, C, H, W).to(memory_format=input_memory_format),
+        )
         conv = torch.nn.Conv2d(
-            in_channels=N, out_channels=C, kernel_size=H, groups=groups, stride=(strideX, strideY))
+            in_channels=N,
+            out_channels=C,
+            kernel_size=H,
+            groups=groups,
+            stride=(strideX, strideY),
+        )
         conv.weight.data = conv.weight.to(memory_format=weight_memory_format)
         conv.eval()
         self.lower_and_test_with_partitioner(

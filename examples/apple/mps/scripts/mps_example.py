@@ -42,7 +42,8 @@ if __name__ == "__main__":
         "--use_fp16",
         default=True,
         action=argparse.BooleanOptionalAction,
-        help="Whether to automatically convert float32 operations to float16 operations.")
+        help="Whether to automatically convert float32 operations to float16 operations.",
+    )
 
     parser.add_argument(
         "-b",
@@ -72,7 +73,9 @@ if __name__ == "__main__":
     logging.info(f"Exported graph:\n{edge.exported_program.graph}")
 
     compile_specs = [CompileSpec("use_fp16", bytes([args.use_fp16]))]
-    lowered_module = to_backend(MPSBackend.__name__, edge.exported_program, compile_specs)
+    lowered_module = to_backend(
+        MPSBackend.__name__, edge.exported_program, compile_specs
+    )
 
     logging.info(f"Lowered graph:\n{edge.exported_program.graph}")
 

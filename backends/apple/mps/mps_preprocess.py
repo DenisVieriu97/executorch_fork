@@ -175,32 +175,26 @@ class MPSBackend(BackendDetails):
                     value = func(value)
                 return value
 
-            def get_node(self, key, cast_to_fp16=False):
+            def get_node(self, key, cast_from_type=None, cast_to_type=None):
                 value = dict.__getitem__(self, key)
-                if cast_to_fp16:
+                if cast_from_type:
+                    assert(cast_to_type)
+
                     def handle(value):
                         current_data_type = mpsGraph.get_data_type(value)
-                        if current_data_type == get_mps_data_type(torch.float32):
-                            value = mpsGraph.cast_tensor(value, get_mps_data_type(torch.float16))
+                        if current_data_type == get_mps_data_type(cast_from_type):
+                            value = mpsGraph.cast_tensor(value, get_mps_data_type(cast_to_type))
                         return value
                     value = GraphNodesDict._apply_to_structure(value, handle)
                 return value
 
-            def set_node(self, key, value, cast_to_fp32=False):
-                if cast_to_fp32:
-                    def handle(value):
-                        current_data_type = mpsGraph.get_data_type(value)
-                        if current_data_type == get_mps_data_type(torch.float16):
-                            value = mpsGraph.cast_tensor(value, get_mps_data_type(torch.float32))
-                        return value
-                    value = GraphNodesDict._apply_to_structure(value, handle)
-                dict.__setitem__(self, key, value)
-
             def __getitem__(self, key):
-                return self.get_node(key, self._convert_model_to_fp16)
+                if self._convert_model_to_fp16:
+                    return self.get_node(key, cast_from_type=torch.float32, cast_to_type=torch.float16)
+                return self.get_node(key)
 
             def __setitem__(self, key, value):
-                self.set_node(key, value, self._convert_model_to_fp16)
+                dict.__setitem__(self, key, value)
 
             def __repr__(self):
                 return dict.__repr__(self)
@@ -234,15 +228,14 @@ class MPSBackend(BackendDetails):
                     if node.meta["val"] is None:
                         continue
                     shape = MPSBackend.eval_shape(node.meta["val"])
-                    # Call set_node explicitly to preserve the input signature.
                     if shape is None:
-                        graphNodes.set_node(node.name, mpsGraph.mpsGraphUnrankedPlaceHolder(
+                        graphNodes[node.name] = mpsGraph.mpsGraphUnrankedPlaceHolder(
                             get_mps_data_type(node.meta["val"].dtype)
-                        ))
+                        )
                     else:
-                        graphNodes.set_node(node.name, mpsGraph.mpsGraphRankedPlaceHolder(
+                        graphNodes[node.name] = mpsGraph.mpsGraphRankedPlaceHolder(
                             get_mps_data_type(node.meta["val"].dtype), shape
-                        ))
+                        )
 
             # Handle `call_function` calls.
             elif node.op == "call_function":
@@ -825,16 +818,20 @@ class MPSBackend(BackendDetails):
             # Handle output nodes in the graph.
             elif node.op == "output":
                 output_nodes = []
-                for i in range(len(node.args)):
-                    for j in range(len(node.args[i])):
-                        # Call get_node explicitly to preserve the output signature.
-                        output_nodes.append(graphNodes.get_node(node.args[i][j].name))
+                assert(isinstance(node.meta["val"], (tuple, list)))
+                assert(len(node.args) == 1)
+                assert(len(node.meta["val"]) == len(node.args[0]))
+                for i in range(len(node.args[0])):
+                    cast_kwargs = {}
+                    if get_mps_data_type(node.meta["val"][i].dtype) == get_mps_data_type(torch.float32):
+                        cast_kwargs["cast_from_type"] = torch.float16
+                        cast_kwargs["cast_to_type"] = torch.float32
+                    output_nodes.append(graphNodes.get_node(node.args[0][i].name, **cast_kwargs))
                 mpsGraph.set_outputs(*output_nodes)
             else:
                 torch._assert(
                     False,
                     f"Unsupported operator: {node.op}, {node.name}, {node.target}",
                 )
-
         mpsGraphExecutableBytes = mpsGraph.serialize()
         return PreprocessResult(processed_bytes=bytes(mpsGraphExecutableBytes))

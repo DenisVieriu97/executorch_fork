@@ -105,6 +105,8 @@ if __name__ == "__main__":
             bundled_program
         )
         model_name = f"{model_name}_bundled"
+        if args.use_fp16:
+            model_name = f"{model_name}_fp16"
         program_buffer = bundled_program_buffer
     else:
         program_buffer = executorch_program.buffer

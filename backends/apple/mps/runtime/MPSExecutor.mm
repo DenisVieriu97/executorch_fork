@@ -72,12 +72,20 @@ MPSExecutor::set_inputs_outputs(std::vector<const Tensor*>& inputs, std::vector<
 __ET_NODISCARD Error MPSExecutor::forward(std::vector<const Tensor*>& outputs) {
   Error err = Error::Ok;
   MPSStream* mpsStream = getDefaultMPSStream();
-  id<MTLCommandBuffer> commandBuffer = mpsStream->commandBuffer();
-  [executable_ encodeToCommandBuffer:commandBuffer
-                        inputsArray:inputsArray_
-                        resultsArray:outputsArray_
-                executionDescriptor:nil];
-  if (mps::delegate::getDefaultMPSStream()->commitAndContinueEnabled()) {
+  if (mpsStream->commitAndContinueEnabled() || mpsStream->hasLiveCommandBuffer()) {
+    id<MTLCommandBuffer> commandBuffer = mpsStream->commandBuffer();
+    [executable_ encodeToCommandBuffer:commandBuffer
+                          inputsArray:inputsArray_
+                          resultsArray:outputsArray_
+                  executionDescriptor:nil];
+  } else {
+    [executable_ runWithMTLCommandQueue:mpsStream->commandQueue()
+                            inputsArray:inputsArray_
+                           resultsArray:outputsArray_
+                    executionDescriptor:nil];
+  }
+
+  if (mpsStream->commitAndContinueEnabled()) {
     err = mpsStream->synchronize(SyncType::COMMIT_AND_CONTINUE);
   } else {
     err = mpsStream->synchronize(SyncType::COMMIT_AND_WAIT);

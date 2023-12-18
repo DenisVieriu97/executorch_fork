@@ -91,10 +91,14 @@ MPSGraphModule::conv2D(
                                               paddingBottom:padding[0]
                                                paddingStyle:MPSGraphPaddingStyleExplicit
                                                  dataLayout:MPSGraphTensorNamedDataLayoutNCHW
-                                              weightsLayout:MPSGraphTensorNamedDataLayoutOIHW];
+                                              weightsLayout:MPSGraphTensorNamedDataLayoutHWIO];
+    // Convert weights from OIHW to HWIO.
+    MPSGraphTensor* weightTransposeTensor = [mpsGraph transposeTensor:secondaryTensor
+                                                              permute:@[@2, @3, @1, @0]
+                                                                 name:nil];
 
     MPSGraphTensor* conv2DTensor = [mpsGraph convolution2DWithSourceTensor:primaryTensor
-                                                             weightsTensor:secondaryTensor
+                                                             weightsTensor:weightTransposeTensor
                                                                 descriptor:desc
                                                                       name:@"conv2D"];
 

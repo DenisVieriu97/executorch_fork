@@ -37,11 +37,17 @@ def get_param_from_node(
     return None
 
 
-def create_mpsgraph_constant_tensor(tensor: torch.Tensor, mpsGraph):
+def create_mpsgraph_constant_tensor(
+    tensor: torch.Tensor, mpsGraph, convert_model_to_fp16: bool
+):
+    dtype = get_mps_data_type(tensor.dtype)
+    if convert_model_to_fp16 and dtype == get_mps_data_type(torch.float32):
+        tensor = tensor.half()
+        dtype = get_mps_data_type(torch.float16)
     if tensor.dim() == 0:
-        return mpsGraph.constant(tensor.item(), get_mps_data_type(tensor.dtype))
+        return mpsGraph.constant(tensor.item(), dtype)
     else:
-        return mpsGraph.constantTensor(tensor, get_mps_data_type(tensor.dtype))
+        return mpsGraph.constantTensor(tensor, dtype)
 
 
 @final
@@ -153,14 +159,67 @@ class MPSBackend(BackendDetails):
             exir_ops.edge.aten.pow.Tensor_Scalar: mpsGraph.pow,
         }
 
-        # `graph_nodes` dictionary is made out of <key> : <MPSGraphTensor*>
-        graphNodes: Dict[str, Any] = {}
+        # GraphNodesDict is dictionary structure mapping node to MPSGraph outputs.
+        # Each value is either a MPSGraphTensor* or a tuple(MPSGraphTensor*).
+        # This class can automatically insert casts requiered to convert a model
+        # from float32 to float16.
+        class GraphNodesDict(dict):
+            def __init__(self, convert_model_to_fp16=False):
+                self._convert_model_to_fp16 = convert_model_to_fp16
+
+            @staticmethod
+            def _apply_to_structure(value, func):
+                if isinstance(value, (tuple, list)):
+                    value = [func(x) for x in value]
+                    if isinstance(value, tuple):
+                        value = tuple(value)
+                else:
+                    value = func(value)
+                return value
+
+            def get_node(self, key, cast_from_type=None, cast_to_type=None):
+                value = dict.__getitem__(self, key)
+                if cast_from_type:
+                    assert cast_to_type
+
+                    def handle(value):
+                        current_data_type = mpsGraph.get_data_type(value)
+                        if current_data_type == get_mps_data_type(cast_from_type):
+                            value = mpsGraph.cast_tensor(
+                                value, get_mps_data_type(cast_to_type)
+                            )
+                        return value
+
+                    value = GraphNodesDict._apply_to_structure(value, handle)
+                return value
+
+            def __getitem__(self, key):
+                if self._convert_model_to_fp16:
+                    return self.get_node(
+                        key, cast_from_type=torch.float32, cast_to_type=torch.float16
+                    )
+                return self.get_node(key)
+
+            def __setitem__(self, key, value):
+                dict.__setitem__(self, key, value)
+
+            def __repr__(self):
+                return dict.__repr__(self)
+
+        # Check whether the model should be converted to fp16.
+        convert_model_to_fp16 = True
+        for spec in compile_specs:
+            if spec.key == "use_fp16":
+                convert_model_to_fp16 = bool(list(bytes(spec.value))[0])
+        graphNodes = GraphNodesDict(convert_model_to_fp16=convert_model_to_fp16)
 
         for node in edge_program.graph.nodes:
             if node.op == "get_attr":
                 attr = MPSBackend.fetch_attr(node, edge_program)
                 graphNodes[node.name] = create_mpsgraph_constant_tensor(
-                    tensor=attr, mpsGraph=mpsGraph
+                    tensor=attr,
+                    mpsGraph=mpsGraph,
+                    convert_model_to_fp16=convert_model_to_fp16,
                 )
 
             # Handle inputs to the graph.
@@ -170,7 +229,9 @@ class MPSBackend(BackendDetails):
                 lifted_param_or_buffer = get_param_from_node(node, edge_program)
                 if lifted_param_or_buffer is not None:
                     graphNodes[node.name] = create_mpsgraph_constant_tensor(
-                        tensor=lifted_param_or_buffer, mpsGraph=mpsGraph
+                        tensor=lifted_param_or_buffer,
+                        mpsGraph=mpsGraph,
+                        convert_model_to_fp16=convert_model_to_fp16,
                     )
                 else:
                     if node.meta["val"] is None:
@@ -766,15 +827,24 @@ class MPSBackend(BackendDetails):
             # Handle output nodes in the graph.
             elif node.op == "output":
                 output_nodes = []
-                for i in range(len(node.args)):
-                    for j in range(len(node.args[i])):
-                        output_nodes.append(graphNodes[node.args[i][j].name])
+                assert isinstance(node.meta["val"], (tuple, list))
+                assert len(node.args) == 1
+                assert len(node.meta["val"]) == len(node.args[0])
+                for i in range(len(node.args[0])):
+                    cast_kwargs = {}
+                    if get_mps_data_type(
+                        node.meta["val"][i].dtype
+                    ) == get_mps_data_type(torch.float32):
+                        cast_kwargs["cast_from_type"] = torch.float16
+                        cast_kwargs["cast_to_type"] = torch.float32
+                    output_nodes.append(
+                        graphNodes.get_node(node.args[0][i].name, **cast_kwargs)
+                    )
                 mpsGraph.set_outputs(*output_nodes)
             else:
                 torch._assert(
                     False,
                     f"Unsupported operator: {node.op}, {node.name}, {node.target}",
                 )
-
         mpsGraphExecutableBytes = mpsGraph.serialize()
         return PreprocessResult(processed_bytes=bytes(mpsGraphExecutableBytes))

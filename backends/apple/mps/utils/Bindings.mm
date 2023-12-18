@@ -183,6 +183,9 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     .def("permute", [](MPSGraphModule& self, PyMPSGraphTensor* inputTensor, IntArrayRef axes) {
       return self.permute(static_cast<MPSGraphTensor*>(inputTensor), axes);
     })
+    .def("cast_tensor", [](MPSGraphModule& self, PyMPSGraphTensor* inputTensor, MPSDataType dtype) {
+      return self.cast_tensor(static_cast<MPSGraphTensor*>(inputTensor), dtype);
+    })
     .def("cumsum", [](MPSGraphModule& self, PyMPSGraphTensor* inputTensor, int dim) {
       return self.cumsum(static_cast<MPSGraphTensor*>(inputTensor), dim);
     })
@@ -315,6 +318,9 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     })
     .def("floor_divide", [](MPSGraphModule& self, PyMPSGraphTensor* primaryTensor, PyMPSGraphTensor* secondaryTensor) {
       return self.div_mode_template(static_cast<MPSGraphTensor*>(primaryTensor), static_cast<MPSGraphTensor*>(secondaryTensor), "floor", "floor_divide");
+    })
+    .def("get_data_type", [](MPSGraphModule& self, PyMPSGraphTensor* inputTensor) {
+      return self.getDataType(static_cast<MPSGraphTensor*>(inputTensor));
     })
 
     //

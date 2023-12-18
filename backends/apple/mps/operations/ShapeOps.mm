@@ -223,6 +223,11 @@ MPSGraphModule::permute(MPSGraphTensor* inputTensor,
 }
 
 PyMPSGraphTensor*
+MPSGraphModule::cast_tensor(MPSGraphTensor* inputTensor, MPSDataType dtype) {
+  return castMPSTensor(mpsGraph, inputTensor, dtype);
+}
+
+PyMPSGraphTensor*
 MPSGraphModule::squeeze(MPSGraphTensor* inputTensor) {
   return [mpsGraph squeezeTensor:inputTensor
                             name:@"squeeze"];

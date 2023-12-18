@@ -14,6 +14,7 @@ from executorch.backends.apple.mps.mps_preprocess import MPSBackend
 
 from executorch.exir.backend.backend_api import to_backend
 from executorch.exir.capture._config import ExecutorchBackendConfig
+from executorch.exir.backend.backend_details import CompileSpec
 from executorch.sdk.bundled_program.config import MethodTestCase, MethodTestSuite
 from executorch.sdk.bundled_program.core import create_bundled_program
 from executorch.sdk.bundled_program.serialize import (
@@ -36,6 +37,13 @@ if __name__ == "__main__":
         "--model_name",
         required=True,
         help=f"Provide model name. Valid ones: {list(MODEL_NAME_TO_MODEL.keys())}",
+    )
+
+    parser.add_argument(
+        "--use_fp16",
+        default=True,
+        action=argparse.BooleanOptionalAction,
+        help="Whether to automatically convert float32 operations to float16 operations.",
     )
 
     parser.add_argument(
@@ -65,7 +73,10 @@ if __name__ == "__main__":
     ).to_edge(exir.EdgeCompileConfig(_check_ir_validity=False))
     logging.info(f"Exported graph:\n{edge.exported_program.graph}")
 
-    lowered_module = to_backend(MPSBackend.__name__, edge.exported_program, [])
+    compile_specs = [CompileSpec("use_fp16", bytes([args.use_fp16]))]
+    lowered_module = to_backend(
+        MPSBackend.__name__, edge.exported_program, compile_specs
+    )
 
     logging.info(f"Lowered graph:\n{edge.exported_program.graph}")
 
@@ -98,6 +109,8 @@ if __name__ == "__main__":
             bundled_program
         )
         model_name = f"{model_name}_bundled"
+        if args.use_fp16:
+            model_name = f"{model_name}_fp16"
         program_buffer = bundled_program_buffer
     else:
         program_buffer = executorch_program.buffer

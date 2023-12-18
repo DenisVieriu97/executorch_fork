@@ -15,6 +15,7 @@ from executorch.backends.apple.mps.mps_preprocess import MPSBackend
 from executorch.exir import ExecutorchProgram, ExirExportedProgram
 from executorch.exir.backend.backend_api import to_backend, validation_disabled
 
+from executorch.exir.backend.backend_details import CompileSpec
 from executorch.exir.print_program import print_program
 from executorch.sdk.bundled_program.config import MethodTestCase, MethodTestSuite
 from executorch.sdk.bundled_program.core import create_bundled_program
@@ -122,6 +123,7 @@ class TestMPS(unittest.TestCase):
         use_partitioner: bool = False,
         dump_non_lowered_module: bool = False,
         dump_lowered_module: bool = False,
+        use_fp16: bool = False,
     ) -> ExirExportedProgram:
         """
         Helper testing function that takes a torch.nn.Module and lowers it to XNNPACK with
@@ -151,8 +153,9 @@ class TestMPS(unittest.TestCase):
             with validation_disabled():
                 None
         else:
+            compile_specs = [CompileSpec("use_fp16", bytes([use_fp16]))]
             delegated_program = to_backend(
-                "MPSBackend", edge_program.exported_program, []
+                "MPSBackend", edge_program.exported_program, compile_specs
             )
 
         logging.info("Step 3: Capturing executorch program with lowered module...")
@@ -218,6 +221,7 @@ class TestMPS(unittest.TestCase):
         graph_module,
         example_inputs,
         func_name: str,
+        use_fp16: bool = False,
     ):
         logging.info(func_name)
         # MPS TODO: partitioner support
@@ -226,4 +230,5 @@ class TestMPS(unittest.TestCase):
             example_inputs,
             use_partitioner=False,
             func_name=func_name,
+            use_fp16=use_fp16,
         )
